@@ -1,0 +1,52 @@
+# AIIM Backend Configuration
+# 环境变量会覆盖此文件配置：APP_ENV=production
+
+app:
+  name: "aiim"
+  host: "0.0.0.0"
+  port: 8080
+  env: "development"  # development | production
+
+database:
+  driver: "sqlite"     # sqlite | postgres
+  dsn: "./data/aiim.db"
+
+  # 生产环境 PostgreSQL（注释掉上面那行，取消注释下面）
+  # driver: "postgres"
+  # dsn: "postgres://user:password@localhost:5432/aiim?sslmode=disable"
+
+jwt:
+  secret: "your-super-secret-key-change-in-production-min-32-chars"
+  access_ttl_minutes: 15
+  refresh_ttl_days: 7
+
+websocket:
+  read_buf_size: 1024
+  write_buf_size: 1024
+  ping_interval_seconds: 30
+  pong_timeout_seconds: 60
+  max_msg_size: 65536   # 64KB
+
+log:
+  level: "debug"         # debug | info | warn | error
+  format: "console"      # console | json
+  output: "stdout"       # stdout | file
+  file: "./logs/aiim.log"
+
+cors:
+  allowed_origins:
+    - "http://localhost:5173"
+    - "http://localhost:3000"
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+  allowed_headers:
+    - "Authorization"
+    - "Content-Type"
+    - "X-Requested-With"
+  expose_headers:
+    - "Content-Length"
+  allow_credentials: true
