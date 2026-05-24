@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	"aiim/internal/domain/errors"
 	"aiim/internal/domain/model"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -17,15 +18,21 @@ type Claims struct {
 }
 
 type JWTTokenService struct {
-	secret []byte
+	secret           []byte
+	accessTTLMinutes int
+	refreshTTLDays   int
 }
 
-func NewJWTTokenService() *JWTTokenService {
-	return &JWTTokenService{}
+func NewJWTTokenService(secret string, accessTTLMinutes, refreshTTLDays int) *JWTTokenService {
+	return &JWTTokenService{
+		secret:           []byte(secret),
+		accessTTLMinutes: accessTTLMinutes,
+		refreshTTLDays:   refreshTTLDays,
+	}
 }
 
 func (s *JWTTokenService) GenerateAccessToken(user *model.User, sessionID string) (string, int64, error) {
-	expAt := time.Now().Add(15 * time.Minute)
+	expAt := time.Now().Add(time.Duration(s.accessTTLMinutes) * time.Minute)
 	claims := Claims{
 		UserID:    user.ID,
 		SessionID: sessionID,
@@ -41,7 +48,7 @@ func (s *JWTTokenService) GenerateAccessToken(user *model.User, sessionID string
 }
 
 func (s *JWTTokenService) GenerateRefreshToken(user *model.User, sessionID string) (string, error) {
-	expAt := time.Now().Add(7 * 24 * time.Hour)
+	expAt := time.Now().Add(time.Duration(s.refreshTTLDays) * 24 * time.Hour)
 	claims := Claims{
 		UserID:    user.ID,
 		SessionID: sessionID,
@@ -61,13 +68,20 @@ func (s *JWTTokenService) ValidateAccessToken(tokenStr string) (userID, sessionI
 		return s.secret, nil
 	})
 	if err != nil || !token.Valid {
-		return "", "", err
+		return "", "", errors.ErrTokenInvalid
 	}
 	return claims.UserID, claims.SessionID, nil
 }
 
 func (s *JWTTokenService) ValidateRefreshToken(tokenStr string) (userID, sessionID string, err error) {
-	return s.ValidateAccessToken(tokenStr)
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (interface{}, error) {
+		return s.secret, nil
+	})
+	if err != nil || !token.Valid {
+		return "", "", errors.ErrRefreshTokenInvalid
+	}
+	return claims.UserID, claims.SessionID, nil
 }
 
 func (s *JWTTokenService) HashToken(token string) string {

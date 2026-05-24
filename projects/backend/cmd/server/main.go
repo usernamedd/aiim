@@ -36,15 +36,22 @@ func main() {
 		logger.Fatal("数据库初始化失败", zap.Error(err))
 	}
 
-	// Outbound adapters（具体类型，Go 隐式满足接口）
+	// Outbound adapters
 	userRepo := persistence.NewGORMUserRepo(db)
 	sessionRepo := persistence.NewGROMSessionRepo(db)
 	chatRepo := persistence.NewGORMChatRepo(db)
 	messageRepo := persistence.NewGORMMessageRepo(db)
-	tokenSvc := token.NewJWTTokenService()
+
+	// JWT Token Service（从配置读取密钥和 TTL）
+	tokenSvc := token.NewJWTTokenService(
+		config.Config.GetString("jwt.secret"),
+		config.Config.GetInt("jwt.access_ttl_minutes"),
+		config.Config.GetInt("jwt.refresh_ttl_days"),
+	)
+
 	wsHub := realtime.NewWSHub()
 
-	// Domain Services（注入 Port 接口，具体类型自动满足接口）
+	// Domain Services
 	authSvc := service.NewAuthService(userRepo, sessionRepo, tokenSvc)
 	userSvc := service.NewUserService(userRepo)
 	messageSvc := service.NewMessageService(messageRepo, chatRepo, wsHub)
@@ -53,9 +60,10 @@ func main() {
 	authHandler := http.NewAuthHandler(authSvc)
 	userHandler := http.NewUserHandler(userSvc)
 	wsHandler := http.NewWSHandler(messageSvc, wsHub)
+	authMiddleware := http.NewAuthMiddleware(authSvc)
 
 	router := gin.Default()
-	registerRoutes(router, authHandler, userHandler, wsHandler)
+	registerRoutes(router, authHandler, userHandler, wsHandler, authMiddleware)
 
 	addr := cfgHostPort()
 	logger.Info("🚀 AIIM Backend 启动", zap.String("addr", addr))
@@ -70,9 +78,10 @@ func cfgHostPort() string {
 		config.Config.GetInt("app.port"))
 }
 
-func registerRoutes(r *gin.Engine, ah *http.AuthHandler, uh *http.UserHandler, wh *http.WSHandler) {
+func registerRoutes(r *gin.Engine, ah *http.AuthHandler, uh *http.UserHandler, wh *http.WSHandler, am *http.AuthMiddleware) {
 	api := r.Group("/api/v1")
 	{
+		// 认证路由（公开）
 		auth := api.Group("/auth")
 		{
 			auth.POST("/register", ah.Register)
@@ -80,12 +89,17 @@ func registerRoutes(r *gin.Engine, ah *http.AuthHandler, uh *http.UserHandler, w
 			auth.POST("/refresh", ah.RefreshToken)
 			auth.POST("/logout", ah.Logout)
 		}
+
+		// 用户路由（需认证）
 		users := api.Group("/users")
+		users.Use(am.RequireAuth())
 		{
 			users.GET("/search", uh.SearchUsers)
 			users.GET("/:id", uh.GetUser)
 			users.PUT("/profile", uh.UpdateProfile)
 		}
+
+		// WebSocket 路由
 		api.GET("/ws", wh.HandleWS)
 	}
 }
