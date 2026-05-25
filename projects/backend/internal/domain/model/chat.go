@@ -24,12 +24,13 @@ const (
 
 // ChatMember 聊天室成员
 type ChatMember struct {
-	ID        string
-	ChatID    string
-	UserID    string
-	Role      MemberRole // owner/admin/member
-	JoinedAt  time.Time
-	Nickname  string    // 在群里的昵称
+	ID               string
+	ChatID           string
+	UserID           string
+	Role             MemberRole // owner/admin/member
+	JoinedAt         time.Time
+	Nickname         string      // 在群里的昵称
+	LastReadMessageID *string   // 最后已读的消息ID
 }
 
 // MemberRole 成员角色

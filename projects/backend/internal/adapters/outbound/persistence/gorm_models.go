@@ -47,12 +47,13 @@ func (ChatGORM) TableName() string { return "chats" }
 
 // ChatMemberGORM GORM 聊天室成员模型
 type ChatMemberGORM struct {
-	ID       string    `gorm:"primaryKey;type:varchar(36)"`
-	ChatID   string    `gorm:"uniqueIndex:idx_chat_user;type:varchar(36);not null"`
-	UserID   string    `gorm:"uniqueIndex:idx_chat_user;type:varchar(36);not null"`
-	Role     string    `gorm:"type:varchar(20);default:member"`
-	JoinedAt time.Time
-	Nickname string `gorm:"type:varchar(100)"`
+	ID                 string    `gorm:"primaryKey;type:varchar(36)"`
+	ChatID             string    `gorm:"uniqueIndex:idx_chat_user;type:varchar(36);not null"`
+	UserID             string    `gorm:"uniqueIndex:idx_chat_user;type:varchar(36);not null"`
+	Role               string    `gorm:"type:varchar(20);default:member"`
+	JoinedAt           time.Time
+	Nickname           string    `gorm:"type:varchar(100)"`
+	LastReadMessageID  *string   `gorm:"type:varchar(36)"` // 最后已读的消息ID
 }
 
 func (ChatMemberGORM) TableName() string { return "chat_members" }

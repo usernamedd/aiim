@@ -62,13 +62,19 @@ func (r *GORMUserRepo) FindByIDs(ctx context.Context, ids []string) ([]*model.Us
 }
 
 func (r *GORMUserRepo) Search(ctx context.Context, keyword string, limit, offset int) ([]*model.User, int, error) {
-	var users []*model.User
-	query := r.db.WithContext(ctx).Where("username LIKE ? OR email LIKE ? OR nickname LIKE ?",
+	var usersGORM []UserGORM
+	query := r.db.WithContext(ctx).Model(&UserGORM{}).Where("username LIKE ? OR email LIKE ? OR nickname LIKE ?",
 		"%"+keyword+"%", "%"+keyword+"%", "%"+keyword+"%")
 	var total int64
-	query.Count(&total)
-	if err := query.Limit(limit).Offset(offset).Find(&users).Error; err != nil {
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
+	}
+	if err := query.Limit(limit).Offset(offset).Find(&usersGORM).Error; err != nil {
+		return nil, 0, err
+	}
+	users := make([]*model.User, len(usersGORM))
+	for i := range usersGORM {
+		users[i] = toUserModel(&usersGORM[i])
 	}
 	return users, int(total), nil
 }

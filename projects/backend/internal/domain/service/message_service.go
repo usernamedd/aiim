@@ -22,8 +22,13 @@ func NewMessageService(
 	msgRepo outbound.MessageRepositoryPort,
 	chatRepo outbound.ChatRepositoryPort,
 	wsHub outbound.WSHubPort,
-) inbound.MessageCommandPort {
+) *MessageService {
 	return &MessageService{msgRepo: msgRepo, chatRepo: chatRepo, wsHub: wsHub}
+}
+
+// CreateDirectChat 创建私聊
+func (s *MessageService) CreateDirectChat(ctx context.Context, userID1, userID2 string) (*model.Chat, error) {
+	return s.chatRepo.CreateDirectChat(ctx, userID1, userID2)
 }
 
 func (s *MessageService) SendMessage(ctx context.Context, chatID, senderID string, content model.MessageContent) (*model.Message, error) {
@@ -64,7 +69,27 @@ func (s *MessageService) SendMessage(ctx context.Context, chatID, senderID strin
 }
 
 func (s *MessageService) MarkAsRead(ctx context.Context, userID, chatID string, messageID string) error {
-	return s.msgRepo.UpdateStatus(ctx, messageID, model.MessageStatusRead)
+	// 1. 更新成员已读位置
+	err := s.chatRepo.UpdateLastReadMessageID(ctx, chatID, userID, messageID)
+	if err != nil {
+		return err
+	}
+
+	// 2. 获取聊天室成员，广播已读状态给其他成员
+	members, _ := s.chatRepo.GetMembers(ctx, chatID)
+	for _, m := range members {
+		if m.ID != userID {
+			s.wsHub.SendToUser(m.ID, outbound.WSMessage{
+				Type: outbound.WSMsgTypeMessageRead,
+				Payload: map[string]interface{}{
+					"chat_id":    chatID,
+					"user_id":    userID,
+					"message_id": messageID,
+				},
+			})
+		}
+	}
+	return nil
 }
 
 func (s *MessageService) DeleteMessage(ctx context.Context, userID, messageID string) error {
@@ -110,4 +135,124 @@ func (s *MessageService) GetRecentChats(ctx context.Context, userID string, limi
 		})
 	}
 	return previews, nil
+}
+
+// SearchChats 搜索聊天室
+func (s *MessageService) SearchChats(ctx context.Context, keyword string, limit int) ([]*model.Chat, error) {
+	return s.chatRepo.Search(ctx, keyword, limit)
+}
+
+// GetChatDetail 获取聊天室详情（含成员）
+func (s *MessageService) GetChatDetail(ctx context.Context, chatID, userID string) (*model.Chat, []*model.User, error) {
+	chat, err := s.chatRepo.FindByID(ctx, chatID)
+	if err != nil {
+		return nil, nil, err
+	}
+	isMember, err := s.chatRepo.IsMember(ctx, chatID, userID)
+	if err != nil || !isMember {
+		return nil, nil, errors.ErrNotChatMember
+	}
+	members, err := s.chatRepo.GetMembers(ctx, chatID)
+	if err != nil {
+		return nil, nil, err
+	}
+	return chat, members, nil
+}
+
+// CreateGroup 创建群聊
+func (s *MessageService) CreateGroup(ctx context.Context, name, ownerID string, memberIDs []string) (*model.Chat, error) {
+	return s.chatRepo.CreateGroup(ctx, name, ownerID, memberIDs)
+}
+
+// UpdateGroupInfo 更新群聊信息
+func (s *MessageService) UpdateGroupInfo(ctx context.Context, chatID, ownerID, name, avatarURL string) (*model.Chat, error) {
+	return s.chatRepo.UpdateGroupInfo(ctx, chatID, ownerID, name, avatarURL)
+}
+
+// AddMembers 批量添加成员（需群主/管理员权限）
+func (s *MessageService) AddMembers(ctx context.Context, chatID, operatorID string, memberIDs []string) error {
+	// 权限校验：操作者必须是群主或管理员
+	role, err := s.chatRepo.GetMemberRole(ctx, chatID, operatorID)
+	if err != nil {
+		return errors.ErrNotChatMember
+	}
+	if role != string(model.MemberRoleOwner) && role != string(model.MemberRoleAdmin) {
+		return errors.ErrNotAuthorized
+	}
+
+	// 批量添加
+	err = s.chatRepo.AddMembers(ctx, chatID, memberIDs, string(model.MemberRoleMember))
+	if err != nil {
+		return err
+	}
+
+	// 广播成员加入事件
+	s.wsHub.BroadcastToChat(chatID, outbound.WSMessage{
+		Type: outbound.WSMsgTypeMemberJoined,
+		Payload: map[string]interface{}{
+			"chat_id":    chatID,
+			"member_ids": memberIDs,
+		},
+	})
+	return nil
+}
+
+// RemoveMember 移除成员（需群主/管理员权限）
+func (s *MessageService) RemoveMember(ctx context.Context, chatID, operatorID, targetID string) error {
+	// 权限校验
+	role, err := s.chatRepo.GetMemberRole(ctx, chatID, operatorID)
+	if err != nil {
+		return errors.ErrNotChatMember
+	}
+	if role != string(model.MemberRoleOwner) && role != string(model.MemberRoleAdmin) {
+		return errors.ErrNotAuthorized
+	}
+
+	// 不能移除群主
+	targetRole, _ := s.chatRepo.GetMemberRole(ctx, chatID, targetID)
+	if targetRole == string(model.MemberRoleOwner) {
+		return errors.ErrNotAuthorized
+	}
+
+	err = s.chatRepo.RemoveMember(ctx, chatID, targetID)
+	if err != nil {
+		return err
+	}
+
+	// 广播成员离开事件
+	s.wsHub.BroadcastToChat(chatID, outbound.WSMessage{
+		Type: outbound.WSMsgTypeMemberLeft,
+		Payload: map[string]interface{}{
+			"chat_id": chatID,
+			"user_id": targetID,
+		},
+	})
+	return nil
+}
+
+// LeaveGroup 主动退出群聊
+func (s *MessageService) LeaveGroup(ctx context.Context, chatID, userID string) error {
+	// 不能让群主退出
+	role, err := s.chatRepo.GetMemberRole(ctx, chatID, userID)
+	if err != nil {
+		return errors.ErrNotChatMember
+	}
+	if role == string(model.MemberRoleOwner) {
+		return errors.ErrNotAuthorized
+	}
+
+	err = s.chatRepo.LeaveGroup(ctx, chatID, userID)
+	if err != nil {
+		return err
+	}
+
+	// 广播成员离开事件
+	s.wsHub.BroadcastToChat(chatID, outbound.WSMessage{
+		Type: outbound.WSMsgTypeMemberLeft,
+		Payload: map[string]interface{}{
+			"chat_id": chatID,
+			"user_id": userID,
+		},
+	})
+	return nil
 }

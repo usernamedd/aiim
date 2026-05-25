@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"aiim/internal/adapters/inbound/http"
 	"aiim/internal/adapters/outbound/persistence"
@@ -11,6 +14,7 @@ import (
 	"aiim/internal/adapters/outbound/token"
 	"aiim/internal/config"
 	"aiim/internal/domain/service"
+	"aiim/internal/ports/outbound"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -42,7 +46,6 @@ func main() {
 	chatRepo := persistence.NewGORMChatRepo(db)
 	messageRepo := persistence.NewGORMMessageRepo(db)
 
-	// JWT Token Service（从配置读取密钥和 TTL）
 	tokenSvc := token.NewJWTTokenService(
 		config.Config.GetString("jwt.secret"),
 		config.Config.GetInt("jwt.access_ttl_minutes"),
@@ -50,6 +53,20 @@ func main() {
 	)
 
 	wsHub := realtime.NewWSHub()
+
+	// 设置聊天室广播回调（由 MessageService 发起，Hub 转发给聊天室成员）
+	wsHub.SetChatBroadcastHandler(func(chatID string, msg outbound.WSMessage) {
+		members, err := chatRepo.GetMembers(context.Background(), chatID)
+		if err != nil {
+			logger.Info("[BroadcastToChat] 获取成员失败", zap.Error(err))
+			return
+		}
+		var memberIDs []string
+		for _, m := range members {
+			memberIDs = append(memberIDs, m.ID)
+		}
+		wsHub.SendToUsers(memberIDs, msg)
+	})
 
 	// Domain Services
 	authSvc := service.NewAuthService(userRepo, sessionRepo, tokenSvc)
@@ -59,11 +76,31 @@ func main() {
 	// Inbound Handlers
 	authHandler := http.NewAuthHandler(authSvc)
 	userHandler := http.NewUserHandler(userSvc)
-	wsHandler := http.NewWSHandler(messageSvc, wsHub)
+	wsHandler := http.NewWSHandler(messageSvc, wsHub, authSvc)
 	authMiddleware := http.NewAuthMiddleware(authSvc)
+	chatHandler := http.NewChatHandler(messageSvc, authSvc)
+	uploadHandler := http.NewUploadHandler()
+
+	// Graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// 启动 WebSocket Hub 事件循环
+	go wsHub.Run(ctx)
 
 	router := gin.Default()
-	registerRoutes(router, authHandler, userHandler, wsHandler, authMiddleware)
+	registerRoutes(router, authHandler, userHandler, wsHandler, authMiddleware, chatHandler, uploadHandler)
+
+	// 信号处理（Ctrl+C / SIGTERM）
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sigCh
+		logger.Info("收到退出信号，正在关闭...")
+		cancel()
+		os.Exit(0)
+	}()
 
 	addr := cfgHostPort()
 	logger.Info("🚀 AIIM Backend 启动", zap.String("addr", addr))
@@ -78,10 +115,9 @@ func cfgHostPort() string {
 		config.Config.GetInt("app.port"))
 }
 
-func registerRoutes(r *gin.Engine, ah *http.AuthHandler, uh *http.UserHandler, wh *http.WSHandler, am *http.AuthMiddleware) {
+func registerRoutes(r *gin.Engine, ah *http.AuthHandler, uh *http.UserHandler, wh *http.WSHandler, am *http.AuthMiddleware, ch *http.ChatHandler, up *http.UploadHandler) {
 	api := r.Group("/api/v1")
 	{
-		// 认证路由（公开）
 		auth := api.Group("/auth")
 		{
 			auth.POST("/register", ah.Register)
@@ -90,7 +126,6 @@ func registerRoutes(r *gin.Engine, ah *http.AuthHandler, uh *http.UserHandler, w
 			auth.POST("/logout", ah.Logout)
 		}
 
-		// 用户路由（需认证）
 		users := api.Group("/users")
 		users.Use(am.RequireAuth())
 		{
@@ -99,7 +134,25 @@ func registerRoutes(r *gin.Engine, ah *http.AuthHandler, uh *http.UserHandler, w
 			users.PUT("/profile", uh.UpdateProfile)
 		}
 
-		// WebSocket 路由
+		chats := api.Group("/chats")
+		chats.Use(am.RequireAuth())
+		{
+			chats.GET("/", ch.GetRecentChats)
+			chats.GET("/:chat_id", ch.GetChatDetail)
+			chats.GET("/:chat_id/messages", ch.GetChatMessages)
+			chats.GET("/search", ch.SearchChats)
+			chats.POST("/direct", ch.CreateDirectChat)
+			chats.POST("/group", ch.CreateGroup)
+			chats.PUT("/:chat_id", ch.UpdateGroupInfo)
+			chats.POST("/:chat_id/members", ch.AddMembers)
+			chats.DELETE("/:chat_id/members/:user_id", ch.RemoveMember)
+			chats.DELETE("/:chat_id/members/me", ch.LeaveGroup)
+		}
+
 		api.GET("/ws", wh.HandleWS)
+
+		// 静态文件服务（上传的文件）
+		api.Static("/uploads", "uploads")
+		api.POST("/upload", am.RequireAuth(), up.HandleUpload)
 	}
 }

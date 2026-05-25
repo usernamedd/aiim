@@ -44,6 +44,9 @@ type ChatRepositoryPort interface {
 	// AddMember 添加成员
 	AddMember(ctx context.Context, member *model.ChatMember) error
 
+	// AddMembers 批量添加成员
+	AddMembers(ctx context.Context, chatID string, memberIDs []string, role string) error
+
 	// RemoveMember 移除成员
 	RemoveMember(ctx context.Context, chatID, userID string) error
 
@@ -52,4 +55,28 @@ type ChatRepositoryPort interface {
 
 	// IsMember 检查是否是成员
 	IsMember(ctx context.Context, chatID, userID string) (bool, error)
+
+	// GetMemberRole 获取成员角色
+	GetMemberRole(ctx context.Context, chatID, userID string) (string, error)
+
+	// LeaveGroup 主动退出群聊
+	LeaveGroup(ctx context.Context, chatID, userID string) error
+
+	// GetLastReadMessageID 获取成员最后已读消息ID
+	GetLastReadMessageID(ctx context.Context, chatID, userID string) (string, error)
+
+	// UpdateLastReadMessageID 更新成员最后已读消息ID
+	UpdateLastReadMessageID(ctx context.Context, chatID, userID, messageID string) error
+
+	// CreateDirectChat 创建两人私聊（不存在才创建）
+	CreateDirectChat(ctx context.Context, userID1, userID2 string) (*model.Chat, error)
+
+	// Search 搜索聊天室（按名称模糊匹配）
+	Search(ctx context.Context, keyword string, limit int) ([]*model.Chat, error)
+
+	// CreateGroup 创建群聊
+	CreateGroup(ctx context.Context, name, ownerID string, memberIDs []string) (*model.Chat, error)
+
+	// UpdateGroupInfo 更新群聊信息（仅群主）
+	UpdateGroupInfo(ctx context.Context, chatID, ownerID, name, avatarURL string) (*model.Chat, error)
 }
