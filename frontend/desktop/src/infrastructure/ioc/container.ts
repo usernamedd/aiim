@@ -10,6 +10,7 @@ import type { WebSocketPort } from '../../application/ports/driven/WebSocketPort
 
 import type { AuthService } from '../../application/ports/driving/AuthService';
 import type { ChatService } from '../../application/ports/driving/ChatService';
+import type { Contact } from '../../domain/entities/Contact';
 
 import { RestAuthGateway } from '../../adapters/driven/api/RestAuthGateway';
 import { InMemoryUserRepository } from '../../adapters/driven/repository/InMemoryUserRepository';
@@ -28,6 +29,47 @@ const userRepository: UserRepository = new InMemoryUserRepository();
 const messageRepository: MessageRepository = new InMemoryMessageRepository();
 const chatRoomRepository: ChatRoomRepository = new InMemoryChatRoomRepository();
 const webSocketPort: WebSocketPort = new WsMessageAdapter();
+
+// Mock contacts storage
+let mockContactsList: Contact[] = [
+  {
+    id: 'contact-1',
+    userId: 'current-user',
+    friendId: 'user-2',
+    username: 'alice',
+    nickname: 'Alice',
+    avatar: undefined,
+    isOnline: true,
+    lastMessageAt: new Date(),
+    isBlocked: false,
+    createdAt: new Date(),
+  },
+  {
+    id: 'contact-2',
+    userId: 'current-user',
+    friendId: 'user-3',
+    username: 'bob',
+    nickname: 'Bob',
+    avatar: undefined,
+    isOnline: false,
+    lastMessageAt: new Date(),
+    isBlocked: false,
+    createdAt: new Date(),
+  },
+  {
+    id: 'contact-3',
+    userId: 'current-user',
+    friendId: 'user-4',
+    username: 'charlie',
+    nickname: 'Charlie',
+    avatar: undefined,
+    isOnline: true,
+    lastMessageAt: new Date(),
+    isBlocked: false,
+    createdAt: new Date(),
+  },
+];
+
 
 // Use Cases
 const loginUseCase = new LoginUseCase(authGateway, userRepository);
@@ -60,6 +102,23 @@ export const chatService: ChatService = {
   connectWebSocket: () => webSocketPort.connect(),
   disconnectWebSocket: () => webSocketPort.disconnect(),
   onMessageReceived: (cb) => webSocketPort.onMessage(cb),
+  getContacts: () => Promise.resolve(mockContactsList),
+  addContact: (username: string) => {
+    const newContact: Contact = {
+      id: `contact-${Date.now()}`,
+      userId: 'current-user',
+      friendId: `user-${Date.now()}`,
+      username,
+      nickname: username,
+      avatar: undefined,
+      isOnline: true,
+      lastMessageAt: new Date(),
+      isBlocked: false,
+      createdAt: new Date(),
+    };
+    mockContactsList.push(newContact);
+    return Promise.resolve(newContact);
+  },
 };
 
 // Re-export for direct access

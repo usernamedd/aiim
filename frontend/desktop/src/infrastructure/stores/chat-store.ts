@@ -3,21 +3,26 @@
 
 import { create } from 'zustand';
 import type { ChatRoom, Message } from '../../domain/entities';
+import type { Contact } from '../../domain/entities/Contact';
 
 interface ChatState {
   // Current conversation
   currentChatRoomId: string | null;
   messages: Message[];
   chatRooms: ChatRoom[];
-  
+
+  // Contacts
+  contacts: Contact[];
+  isLoadingContacts: boolean;
+
   // Pagination
   currentPage: number;
   hasMore: boolean;
   isLoadingMessages: boolean;
-  
+
   // WebSocket status
   isWsConnected: boolean;
-  
+
   // Actions
   setCurrentChatRoom: (chatRoomId: string | null) => void;
   setMessages: (messages: Message[]) => void;
@@ -27,6 +32,9 @@ interface ChatState {
   setChatRooms: (rooms: ChatRoom[]) => void;
   addChatRoom: (room: ChatRoom) => void;
   updateChatRoom: (room: ChatRoom) => void;
+  setContacts: (contacts: Contact[]) => void;
+  addContact: (contact: Contact) => void;
+  setLoadingContacts: (loading: boolean) => void;
   setCurrentPage: (page: number) => void;
   setHasMore: (hasMore: boolean) => void;
   setLoadingMessages: (loading: boolean) => void;
@@ -38,11 +46,13 @@ export const useChatStore = create<ChatState>((set) => ({
   currentChatRoomId: null,
   messages: [],
   chatRooms: [],
+  contacts: [],
+  isLoadingContacts: false,
   currentPage: 1,
   hasMore: true,
   isLoadingMessages: false,
   isWsConnected: false,
-  
+
   setCurrentChatRoom: (chatRoomId) => set({ currentChatRoomId: chatRoomId, messages: [], currentPage: 1 }),
   setMessages: (messages) => set({ messages }),
   prependMessages: (newMessages) => set((state) => ({ messages: [...newMessages, ...state.messages] })),
@@ -59,6 +69,9 @@ export const useChatStore = create<ChatState>((set) => ({
     set((state) => ({
       chatRooms: state.chatRooms.map((r) => (r.id === room.id ? room : r)),
     })),
+  setContacts: (contacts) => set({ contacts }),
+  addContact: (contact) => set((state) => ({ contacts: [...state.contacts, contact] })),
+  setLoadingContacts: (loading) => set({ isLoadingContacts: loading }),
   setCurrentPage: (page) => set({ currentPage: page }),
   setHasMore: (hasMore) => set({ hasMore }),
   setLoadingMessages: (loading) => set({ isLoadingMessages: loading }),
@@ -68,6 +81,8 @@ export const useChatStore = create<ChatState>((set) => ({
       currentChatRoomId: null,
       messages: [],
       chatRooms: [],
+      contacts: [],
+      isLoadingContacts: false,
       currentPage: 1,
       hasMore: true,
       isLoadingMessages: false,

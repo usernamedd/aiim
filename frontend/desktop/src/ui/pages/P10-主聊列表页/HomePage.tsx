@@ -35,6 +35,8 @@ export function HomePage() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold text-slate-900 dark:text-white">AIIM</h1>
             <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/search')}>🔍</Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/contacts')}>👥</Button>
               <span className={`w-2 h-2 rounded-full ${isWsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
               <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>⚙️</Button>
             </div>

@@ -4,13 +4,16 @@
 import { useCallback, useEffect } from 'react';
 import { useChatStore } from '../../infrastructure/stores/chat-store';
 import { chatService } from '../../infrastructure/ioc/container';
-import { useAuthStore } from '../../infrastructure/stores/auth-store';
+import type { Contact } from '../../domain/entities/Contact';
+import type { ChatRoom } from '../../domain/entities/ChatRoom';
 
 export function useChat() {
   const {
     currentChatRoomId,
     messages,
     chatRooms,
+    contacts,
+    isLoadingContacts,
     currentPage,
     hasMore,
     isLoadingMessages,
@@ -21,14 +24,14 @@ export function useChat() {
     appendMessage,
     updateMessageStatus,
     setChatRooms,
+    addChatRoom,
+    setContacts,
     setCurrentPage,
     setHasMore,
     setLoadingMessages,
     setWsConnected,
     reset,
   } = useChatStore();
-
-  const { user } = useAuthStore();
 
   // Connect WebSocket on mount
   useEffect(() => {
@@ -55,6 +58,12 @@ export function useChat() {
     setChatRooms(rooms);
     return rooms;
   }, [setChatRooms]);
+
+  const loadContacts = useCallback(async () => {
+    const contactList = await chatService.getContacts();
+    setContacts(contactList);
+    return contactList;
+  }, [setContacts]);
 
   const loadMessages = useCallback(async (chatRoomId: string, page = 1) => {
     setLoadingMessages(true);
@@ -90,6 +99,18 @@ export function useChat() {
     return room;
   }, [chatRooms, setChatRooms]);
 
+  const addContact = useCallback(async (username: string): Promise<Contact> => {
+    const contact = await chatService.addContact(username);
+    setContacts([...contacts, contact]);
+    return contact;
+  }, [contacts, setContacts]);
+
+  const createGroup = useCallback(async (name: string, memberIds: string[]): Promise<ChatRoom> => {
+    const room = await chatService.createChatRoom('group', name, memberIds);
+    addChatRoom(room);
+    return room;
+  }, [addChatRoom]);
+
   const selectChatRoom = useCallback(async (chatRoomId: string) => {
     setCurrentChatRoom(chatRoomId);
     await loadMessages(chatRoomId, 1);
@@ -99,16 +120,20 @@ export function useChat() {
     currentChatRoomId,
     messages,
     chatRooms,
+    contacts,
+    isLoadingContacts,
     currentPage,
     hasMore,
     isLoadingMessages,
     isWsConnected,
-    user,
     loadChatRooms,
+    loadContacts,
     loadMessages,
     loadMore,
     sendMessage,
     createChatRoom,
+    addContact,
+    createGroup,
     selectChatRoom,
     setCurrentChatRoom: (id: string | null) => setCurrentChatRoom(id),
     reset,

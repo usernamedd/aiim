@@ -13,6 +13,8 @@ export class AddContactUseCase {
     const contact = createContact({
       userId: params.userId,
       friendId: params.contactUserId,
+      username: params.contactUserId,
+      nickname: params.contactUserId,
       remark: params.remark,
     });
     
