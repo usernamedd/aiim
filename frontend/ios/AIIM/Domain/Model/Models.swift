@@ -72,6 +72,10 @@ struct Chat: Codable, Identifiable, Equatable {
     var lastMessageTime: Date?
     var unreadCount: Int
     var members: [User]?
+    var isPinned: Bool = false
+    var isMuted: Bool = false
+    var isOnline: Bool = false
+    var lastMessageSenderName: String?
     
     enum CodingKeys: String, CodingKey {
         case id, name, type, members
@@ -79,6 +83,16 @@ struct Chat: Codable, Identifiable, Equatable {
         case lastMessage = "last_message"
         case lastMessageTime = "last_message_time"
         case unreadCount = "unread_count"
+    }
+    
+    var displayName: String {
+        if let name = name {
+            return name
+        }
+        if let firstMember = members?.first {
+            return firstMember.nickname ?? firstMember.username
+        }
+        return "Unknown Chat"
     }
 }
 
