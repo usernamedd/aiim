@@ -37,6 +37,7 @@ export function HomePage() {
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => navigate('/search')}>🔍</Button>
               <Button variant="ghost" size="sm" onClick={() => navigate('/files')}>📁</Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')}>📊</Button>
               <Button variant="ghost" size="sm" onClick={() => navigate('/contacts')}>👥</Button>
               <span className={`w-2 h-2 rounded-full ${isWsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
               <Button variant="ghost" size="sm" onClick={() => navigate('/settings')}>⚙️</Button>

@@ -16,6 +16,9 @@ import { SettingsDomainPage } from '../pages/P51-行业切换页/SettingsDomainP
 import { FileBrowserPage } from '../pages/P30-文件浏览器页/FileBrowserPage';
 import { DebugConsolePage } from '../pages/P31-调试控制台页/DebugConsolePage';
 import { DiffViewerPage } from '../pages/P32-差异对比页/DiffViewerPage';
+import { AIAssistantPage } from '../pages/P33-AI助手页/AIAssistantPage';
+import { DashboardPage } from '../pages/P40-仪表盘页/DashboardPage';
+import { StockDetailPage } from '../pages/P41-持仓详情页/StockDetailPage';
 
 // Auth Guard - redirects to login if not authenticated
 function AuthGuard() {
@@ -60,6 +63,9 @@ export function App() {
             <Route path="/files" element={<FileBrowserPage />} />
             <Route path="/debug" element={<DebugConsolePage />} />
             <Route path="/diff" element={<DiffViewerPage />} />
+            <Route path="/ai" element={<AIAssistantPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/stock/:symbol" element={<StockDetailPage />} />
           </Route>
 
           {/* Default redirects */}
