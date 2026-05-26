@@ -13,4 +13,10 @@ sealed class Screen(val route: String) {
     }
     data object Contacts : Screen("contacts")
     data object Settings : Screen("settings")
+
+    // Software Engineering pages
+    data object FileBrowser : Screen("file_browser")
+    data object DebugConsole : Screen("debug_console")
+    data object DiffCompare : Screen("diff_compare")
+    data object AIAssistant : Screen("ai_assistant")
 }

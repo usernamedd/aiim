@@ -4,7 +4,8 @@ data class Chat(
     val id: String,
     val participantIds: List<String>,
     val lastMessage: Message?,
-    val updatedAt: String
+    val updatedAt: String,
+    val unreadCount: Int = 0
 )
 
 data class Message(

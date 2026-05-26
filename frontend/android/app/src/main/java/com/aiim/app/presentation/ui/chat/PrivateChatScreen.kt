@@ -39,7 +39,10 @@ fun PrivateChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Chat") },
+                title = { Text("Chat ${chatId.takeLast(4)}") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -48,30 +51,56 @@ fun PrivateChatScreen(
             )
         },
         bottomBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shadowElevation = 8.dp
             ) {
-                OutlinedTextField(
-                    value = messageText,
-                    onValueChange = { messageText = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Type a message") },
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(
-                    onClick = {
-                        if (messageText.isNotBlank()) {
-                            viewModel.sendMessage(messageText)
-                            messageText = ""
-                        }
-                    },
-                    enabled = !uiState.isSending
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Send, contentDescription = "Send")
+                    Surface(
+                        shape = RoundedCornerShape(24.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = messageText,
+                            onValueChange = { messageText = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("Type a message...") },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilledIconButton(
+                        onClick = {
+                            if (messageText.isNotBlank()) {
+                                viewModel.sendMessage(messageText)
+                                messageText = ""
+                            }
+                        },
+                        enabled = !uiState.isSending && messageText.isNotBlank(),
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        if (uiState.isSending) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Default.Send, contentDescription = "Send")
+                        }
+                    }
                 }
             }
         }

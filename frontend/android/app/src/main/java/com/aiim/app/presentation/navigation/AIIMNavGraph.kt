@@ -5,8 +5,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.aiim.app.presentation.ui.aiassistant.AIAssistantScreen
 import com.aiim.app.presentation.ui.chat.PrivateChatScreen
 import com.aiim.app.presentation.ui.contacts.ContactsScreen
+import com.aiim.app.presentation.ui.debugconsole.DebugConsoleScreen
+import com.aiim.app.presentation.ui.diffcompare.DiffCompareScreen
+import com.aiim.app.presentation.ui.filebrowser.FileBrowserScreen
 import com.aiim.app.presentation.ui.forgotpassword.ForgotPasswordScreen
 import com.aiim.app.presentation.ui.home.HomeScreen
 import com.aiim.app.presentation.ui.login.LoginScreen
@@ -72,6 +76,18 @@ fun AIIMNavGraph(
                 },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onNavigateToFileBrowser = {
+                    navController.navigate(Screen.FileBrowser.route)
+                },
+                onNavigateToDebugConsole = {
+                    navController.navigate(Screen.DebugConsole.route)
+                },
+                onNavigateToDiffCompare = {
+                    navController.navigate(Screen.DiffCompare.route)
+                },
+                onNavigateToAIAssistant = {
+                    navController.navigate(Screen.AIAssistant.route)
                 }
             )
         }
@@ -112,6 +128,42 @@ fun AIIMNavGraph(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        // P30: File Browser
+        composable(route = Screen.FileBrowser.route) {
+            FileBrowserScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // P31: Debug Console
+        composable(route = Screen.DebugConsole.route) {
+            DebugConsoleScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // P32: Diff Compare
+        composable(route = Screen.DiffCompare.route) {
+            DiffCompareScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // P33: AI Assistant
+        composable(route = Screen.AIAssistant.route) {
+            AIAssistantScreen(
+                onBack = {
+                    navController.popBackStack()
                 }
             )
         }

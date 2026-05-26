@@ -22,6 +22,10 @@ fun HomeScreen(
     onNavigateToChat: (String) -> Unit,
     onNavigateToContacts: () -> Unit,
     onNavigateToSettings: () -> Unit,
+    onNavigateToFileBrowser: () -> Unit,
+    onNavigateToDebugConsole: () -> Unit,
+    onNavigateToDiffCompare: () -> Unit,
+    onNavigateToAIAssistant: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -39,6 +43,40 @@ fun HomeScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
+                    label = { Text("Home") },
+                    selected = true,
+                    onClick = { }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Folder, contentDescription = "Files") },
+                    label = { Text("Files") },
+                    selected = false,
+                    onClick = onNavigateToFileBrowser
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.BugReport, contentDescription = "Debug") },
+                    label = { Text("Debug") },
+                    selected = false,
+                    onClick = onNavigateToDebugConsole
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Compare, contentDescription = "Diff") },
+                    label = { Text("Diff") },
+                    selected = false,
+                    onClick = onNavigateToDiffCompare
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.AutoAwesome, contentDescription = "AI") },
+                    label = { Text("AI") },
+                    selected = false,
+                    onClick = onNavigateToAIAssistant
+                )
+            }
         }
     ) { paddingValues ->
         Column(
@@ -50,6 +88,61 @@ fun HomeScreen(
                 text = "Welcome, ${uiState.userName}",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(16.dp)
+            )
+
+            // Software Engineering Section
+            Text(
+                text = "Software Engineering",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SoftwareEngineeringCard(
+                    icon = Icons.Default.Folder,
+                    title = "Files",
+                    onClick = onNavigateToFileBrowser,
+                    modifier = Modifier.weight(1f)
+                )
+                SoftwareEngineeringCard(
+                    icon = Icons.Default.BugReport,
+                    title = "Debug",
+                    onClick = onNavigateToDebugConsole,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SoftwareEngineeringCard(
+                    icon = Icons.Default.Compare,
+                    title = "Diff",
+                    onClick = onNavigateToDiffCompare,
+                    modifier = Modifier.weight(1f)
+                )
+                SoftwareEngineeringCard(
+                    icon = Icons.Default.AutoAwesome,
+                    title = "AI",
+                    onClick = onNavigateToAIAssistant,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+            Text(
+                text = "Recent Chats",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             if (uiState.isLoading) {
@@ -76,6 +169,39 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SoftwareEngineeringCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

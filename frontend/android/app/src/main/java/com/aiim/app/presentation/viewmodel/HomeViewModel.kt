@@ -39,6 +39,6 @@ class HomeViewModel(
 
 class HomeViewModelFactory : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-        return HomeViewModel(ChatRepositoryImpl()) as T
+        return HomeViewModel(MockChatRepository()) as T
     }
 }

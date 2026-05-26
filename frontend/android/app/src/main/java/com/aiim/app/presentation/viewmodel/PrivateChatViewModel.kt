@@ -60,6 +60,6 @@ class PrivateChatViewModel(
 
 class PrivateChatViewModelFactory(private val chatId: String) : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-        return PrivateChatViewModel(chatId, ChatRepositoryImpl()) as T
+        return PrivateChatViewModel(chatId, MockChatRepository()) as T
     }
 }

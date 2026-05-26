@@ -38,6 +38,6 @@ class ContactsViewModel(
 
 class ContactsViewModelFactory : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
-        return ContactsViewModel(ContactRepositoryImpl()) as T
+        return ContactsViewModel(MockContactRepository()) as T
     }
 }
