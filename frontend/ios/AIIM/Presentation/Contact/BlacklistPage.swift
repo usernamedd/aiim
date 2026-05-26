@@ -202,12 +202,14 @@ struct AddBlacklistSheet: View {
                 }
             }
             .onChange(of: searchText) { _, newValue in
-                performSearch(keyword: newValue)
+                Task {
+                    await performSearch(keyword: newValue)
+                }
             }
         }
     }
     
-    private func performSearch(keyword: String) {
+    private func performSearch(keyword: String) async {
         guard !keyword.isEmpty else {
             searchResults = []
             return
