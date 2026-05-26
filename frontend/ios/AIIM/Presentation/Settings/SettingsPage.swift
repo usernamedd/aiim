@@ -63,6 +63,10 @@ struct SettingsPage: View {
                         Label("Appearance", systemImage: "paintbrush")
                     }
                     
+                    NavigationLink(destination: DomainSwitchPage()) {
+                        Label("Domain", systemImage: "globe")
+                    }
+                    
                     NavigationLink(destination: Text("Storage Settings")) {
                         Label("Storage & Data", systemImage: "externaldrive")
                     }

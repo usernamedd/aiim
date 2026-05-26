@@ -13,8 +13,8 @@ struct MainTabView: View {
                 }
                 .tag(0)
             
-            // P20/P21: Search Page
-            SearchPage()
+            // P20/P21/P60/P61: Search Page
+            GlobalSearchPage()
                 .tabItem {
                     Label("Search", systemImage: "magnifyingglass")
                 }

@@ -206,6 +206,19 @@ struct BlacklistedUser: Codable, Identifiable, Equatable {
     }
 }
 
+// MARK: - Domain Model
+struct Domain: Codable, Identifiable, Equatable {
+    let id: String
+    var name: String
+    var url: String
+    var isDefault: Bool
+    
+    enum CodingKeys: String, CodingKey {
+        case id, name, url
+        case isDefault = "is_default"
+    }
+}
+
 // MARK: - Finance Models
 
 struct Stock: Codable, Identifiable, Equatable {
