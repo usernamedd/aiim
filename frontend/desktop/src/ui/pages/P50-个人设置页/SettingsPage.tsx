@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useUIStore } from '../../../infrastructure/stores/ui-store';
 import { Button } from '../../components/C07-Button/Button';
 import { Avatar } from '../../components/C05-Avatar/Avatar';
-import type { AppMode } from '../../../infrastructure/stores/ui-store';
+import { APP_MODES } from '../../../domain/entities/AppMode';
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -15,12 +15,6 @@ export function SettingsPage() {
     await logout();
     navigate('/login');
   };
-
-  const appModes: { value: AppMode; label: string; desc: string }[] = [
-    { value: 'software-engineering', label: '软件工程', desc: '文件浏览 / 调试 / 差异对比 / AI助手' },
-    { value: 'financial', label: '金融研究', desc: '仪表盘 / 持仓详情 / K线图' },
-    { value: 'general', label: '通用', desc: '基础聊天功能' },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex">
@@ -52,20 +46,31 @@ export function SettingsPage() {
           <div>
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">行业切面</h3>
             <div className="space-y-2">
-              {appModes.map((mode) => (
+              {APP_MODES.map((mode) => (
                 <button
-                  key={mode.value}
-                  onClick={() => setAppMode(mode.value)}
+                  key={mode.id}
+                  onClick={() => setAppMode(mode.id)}
                   className={`w-full p-3 rounded-lg text-left transition-colors ${
-                    appMode === mode.value
+                    appMode === mode.id
                       ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500'
                       : 'bg-slate-50 dark:bg-slate-700/50 border-2 border-transparent hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
-                  <p className="font-medium text-slate-900 dark:text-white">{mode.label}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{mode.desc}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{mode.icon}</span>
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-white">{mode.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{mode.description}</p>
+                    </div>
+                  </div>
                 </button>
               ))}
+              <button
+                onClick={() => navigate('/settings/domain')}
+                className="w-full p-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                详细设置 →
+              </button>
             </div>
           </div>
 

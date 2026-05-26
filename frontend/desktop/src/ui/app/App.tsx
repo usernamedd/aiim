@@ -12,6 +12,8 @@ import { ContactsPage } from '../pages/P22-联系人列表页/ContactsPage';
 import { SearchPage } from '../pages/P60-全局搜索页/SearchPage';
 import { SearchResultsPage } from '../pages/P61-搜索结果页/SearchResultsPage';
 import { SettingsPage } from '../pages/P50-个人设置页/SettingsPage';
+import { SettingsDomainPage } from '../pages/P51-行业切换页/SettingsDomainPage';
+import { FileBrowserPage } from '../pages/P30-文件浏览器页/FileBrowserPage';
 
 // Auth Guard - redirects to login if not authenticated
 function AuthGuard() {
@@ -52,6 +54,8 @@ export function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/search/results" element={<SearchResultsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/domain" element={<SettingsDomainPage />} />
+            <Route path="/files" element={<FileBrowserPage />} />
           </Route>
 
           {/* Default redirects */}

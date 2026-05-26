@@ -3,8 +3,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-export type AppMode = 'financial' | 'software-engineering' | 'general';
+import { AppMode } from '../../domain/entities/AppMode';
 
 interface UIState {
   // Sidebar
@@ -32,7 +31,7 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       sidebarCollapsed: false,
       activePanelTab: 'file',
-      appMode: 'software-engineering',
+      appMode: 'general',
       theme: 'system',
       
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
