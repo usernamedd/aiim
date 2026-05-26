@@ -14,6 +14,8 @@ import { SearchResultsPage } from '../pages/P61-搜索结果页/SearchResultsPag
 import { SettingsPage } from '../pages/P50-个人设置页/SettingsPage';
 import { SettingsDomainPage } from '../pages/P51-行业切换页/SettingsDomainPage';
 import { FileBrowserPage } from '../pages/P30-文件浏览器页/FileBrowserPage';
+import { DebugConsolePage } from '../pages/P31-调试控制台页/DebugConsolePage';
+import { DiffViewerPage } from '../pages/P32-差异对比页/DiffViewerPage';
 
 // Auth Guard - redirects to login if not authenticated
 function AuthGuard() {
@@ -56,6 +58,8 @@ export function App() {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/domain" element={<SettingsDomainPage />} />
             <Route path="/files" element={<FileBrowserPage />} />
+            <Route path="/debug" element={<DebugConsolePage />} />
+            <Route path="/diff" element={<DiffViewerPage />} />
           </Route>
 
           {/* Default redirects */}

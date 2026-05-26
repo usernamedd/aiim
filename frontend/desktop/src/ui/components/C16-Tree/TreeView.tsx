@@ -7,6 +7,8 @@ export interface TreeNode {
   type: 'file' | 'folder'
   children?: TreeNode[]
   path: string
+  size?: number        // File size in bytes
+  modifiedTime?: number // Last modified timestamp (ms)
 }
 
 interface TreeViewProps {
