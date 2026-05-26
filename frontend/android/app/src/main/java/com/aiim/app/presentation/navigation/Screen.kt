@@ -19,4 +19,15 @@ sealed class Screen(val route: String) {
     data object DebugConsole : Screen("debug_console")
     data object DiffCompare : Screen("diff_compare")
     data object AIAssistant : Screen("ai_assistant")
+
+    // P22: Contact sub-pages
+    data object ContactRequests : Screen("contact_requests")
+    data object Blacklist : Screen("blacklist")
+    data object ContactGroups : Screen("contact_groups")
+
+    // P40-P41: Finance
+    data object Dashboard : Screen("dashboard")
+    data object StockDetail : Screen("stock/{symbol}") {
+        fun createRoute(symbol: String) = "stock/$symbol"
+    }
 }

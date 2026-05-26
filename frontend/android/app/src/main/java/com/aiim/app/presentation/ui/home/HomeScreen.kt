@@ -26,6 +26,10 @@ fun HomeScreen(
     onNavigateToDebugConsole: () -> Unit,
     onNavigateToDiffCompare: () -> Unit,
     onNavigateToAIAssistant: () -> Unit,
+    onNavigateToDashboard: () -> Unit = {},
+    onNavigateToContactRequests: () -> Unit = {},
+    onNavigateToBlacklist: () -> Unit = {},
+    onNavigateToContactGroups: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -138,6 +142,72 @@ fun HomeScreen(
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+            // Finance Section (P40)
+            Text(
+                text = "Finance",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SoftwareEngineeringCard(
+                    icon = Icons.Default.Dashboard,
+                    title = "Dashboard",
+                    onClick = onNavigateToDashboard,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+
+            // Contact Management Section (P22)
+            Text(
+                text = "Contact Management",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SoftwareEngineeringCard(
+                    icon = Icons.Default.PersonAdd,
+                    title = "Requests",
+                    onClick = onNavigateToContactRequests,
+                    modifier = Modifier.weight(1f)
+                )
+                SoftwareEngineeringCard(
+                    icon = Icons.Default.Block,
+                    title = "Blacklist",
+                    onClick = onNavigateToBlacklist,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SoftwareEngineeringCard(
+                    icon = Icons.Default.Group,
+                    title = "Groups",
+                    onClick = onNavigateToContactGroups,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.weight(1f))
+            }
 
             Text(
                 text = "Recent Chats",

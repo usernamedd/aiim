@@ -6,8 +6,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.aiim.app.presentation.ui.aiassistant.AIAssistantScreen
+import com.aiim.app.presentation.ui.blacklist.BlacklistScreen
 import com.aiim.app.presentation.ui.chat.PrivateChatScreen
+import com.aiim.app.presentation.ui.contactgroups.ContactGroupsScreen
 import com.aiim.app.presentation.ui.contacts.ContactsScreen
+import com.aiim.app.presentation.ui.contactrequests.ContactRequestsScreen
+import com.aiim.app.presentation.ui.dashboard.DashboardScreen
 import com.aiim.app.presentation.ui.debugconsole.DebugConsoleScreen
 import com.aiim.app.presentation.ui.diffcompare.DiffCompareScreen
 import com.aiim.app.presentation.ui.filebrowser.FileBrowserScreen
@@ -16,6 +20,7 @@ import com.aiim.app.presentation.ui.home.HomeScreen
 import com.aiim.app.presentation.ui.login.LoginScreen
 import com.aiim.app.presentation.ui.register.RegisterScreen
 import com.aiim.app.presentation.ui.settings.SettingsScreen
+import com.aiim.app.presentation.ui.stockdetail.StockDetailScreen
 
 @Composable
 fun AIIMNavGraph(
@@ -88,6 +93,18 @@ fun AIIMNavGraph(
                 },
                 onNavigateToAIAssistant = {
                     navController.navigate(Screen.AIAssistant.route)
+                },
+                onNavigateToDashboard = {
+                    navController.navigate(Screen.Dashboard.route)
+                },
+                onNavigateToContactRequests = {
+                    navController.navigate(Screen.ContactRequests.route)
+                },
+                onNavigateToBlacklist = {
+                    navController.navigate(Screen.Blacklist.route)
+                },
+                onNavigateToContactGroups = {
+                    navController.navigate(Screen.ContactGroups.route)
                 }
             )
         }
@@ -162,6 +179,57 @@ fun AIIMNavGraph(
         // P33: AI Assistant
         composable(route = Screen.AIAssistant.route) {
             AIAssistantScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // P22: Contact sub-pages
+        composable(route = Screen.ContactRequests.route) {
+            ContactRequestsScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Screen.Blacklist.route) {
+            BlacklistScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = Screen.ContactGroups.route) {
+            ContactGroupsScreen(
+                onBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // P40: Dashboard
+        composable(route = Screen.Dashboard.route) {
+            DashboardScreen(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onStockClick = { symbol ->
+                    navController.navigate(Screen.StockDetail.createRoute(symbol))
+                }
+            )
+        }
+
+        // P41: Stock Detail
+        composable(
+            route = Screen.StockDetail.route,
+            arguments = listOf(navArgument("symbol") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val symbol = backStackEntry.arguments?.getString("symbol") ?: ""
+            StockDetailScreen(
+                symbol = symbol,
                 onBack = {
                     navController.popBackStack()
                 }
