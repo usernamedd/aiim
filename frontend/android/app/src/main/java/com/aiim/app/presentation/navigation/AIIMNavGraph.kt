@@ -14,11 +14,14 @@ import com.aiim.app.presentation.ui.contactrequests.ContactRequestsScreen
 import com.aiim.app.presentation.ui.dashboard.DashboardScreen
 import com.aiim.app.presentation.ui.debugconsole.DebugConsoleScreen
 import com.aiim.app.presentation.ui.diffcompare.DiffCompareScreen
+import com.aiim.app.presentation.ui.domainswitch.DomainSwitchScreen
 import com.aiim.app.presentation.ui.filebrowser.FileBrowserScreen
 import com.aiim.app.presentation.ui.forgotpassword.ForgotPasswordScreen
 import com.aiim.app.presentation.ui.home.HomeScreen
 import com.aiim.app.presentation.ui.login.LoginScreen
 import com.aiim.app.presentation.ui.register.RegisterScreen
+import com.aiim.app.presentation.ui.search.GlobalSearchScreen
+import com.aiim.app.presentation.ui.search.SearchResultScreen
 import com.aiim.app.presentation.ui.settings.SettingsScreen
 import com.aiim.app.presentation.ui.stockdetail.StockDetailScreen
 
@@ -232,6 +235,52 @@ fun AIIMNavGraph(
                 symbol = symbol,
                 onBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+        // P51: Domain Switch
+        composable(route = Screen.DomainSwitch.route) {
+            DomainSwitchScreen(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onDomainSelected = { domain ->
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // P60: Global Search
+        composable(route = Screen.GlobalSearch.route) {
+            GlobalSearchScreen(
+                onBack = {
+                    navController.popBackStack()
+                },
+                onSearchResult = { query, category ->
+                    navController.navigate(Screen.SearchResult.createRoute(query, category))
+                }
+            )
+        }
+
+        // P61: Search Result
+        composable(
+            route = Screen.SearchResult.route,
+            arguments = listOf(
+                navArgument("query") { type = NavType.StringType },
+                navArgument("category") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val query = backStackEntry.arguments?.getString("query") ?: ""
+            val category = backStackEntry.arguments?.getString("category") ?: "All"
+            SearchResultScreen(
+                query = query,
+                category = category,
+                onBack = {
+                    navController.popBackStack()
+                },
+                onItemClick = { id ->
+                    // Handle item click
                 }
             )
         }

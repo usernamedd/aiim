@@ -30,4 +30,13 @@ sealed class Screen(val route: String) {
     data object StockDetail : Screen("stock/{symbol}") {
         fun createRoute(symbol: String) = "stock/$symbol"
     }
+
+    // P51: Domain Switch
+    data object DomainSwitch : Screen("domain_switch")
+
+    // P60-P61: Search
+    data object GlobalSearch : Screen("global_search")
+    data object SearchResult : Screen("search_result/{query}/{category}") {
+        fun createRoute(query: String, category: String) = "search_result/$query/$category"
+    }
 }
