@@ -17,6 +17,8 @@ export function ChatPage() {
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [pendingAttachment, setPendingAttachment] = useState<{ name: string; data: string; type: 'image' | 'file' } | null>(null);
+  const [inputHistory, setInputHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +69,8 @@ export function ChatPage() {
       }
       if (inputValue.trim()) {
         await sendMessage(inputValue.trim(), 'text');
+        setInputHistory((prev) => [inputValue.trim(), ...prev.slice(0, 49)]);
+        setHistoryIndex(-1);
       }
       setInputValue('');
       inputRef.current?.focus();
@@ -76,9 +80,26 @@ export function ChatPage() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleSend();
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    } else if (e.key === 'ArrowUp' && inputHistory.length > 0) {
+      e.preventDefault();
+      const nextIndex = Math.min(historyIndex + 1, inputHistory.length - 1);
+      setHistoryIndex(nextIndex);
+      setInputValue(inputHistory[nextIndex] || '');
+    } else if (e.key === 'ArrowDown' && historyIndex > 0) {
+      e.preventDefault();
+      const nextIndex = historyIndex - 1;
+      setHistoryIndex(nextIndex);
+      setInputValue(inputHistory[nextIndex] || '');
+    } else if (e.key === 'ArrowDown' && historyIndex === 0) {
+      e.preventDefault();
+      setHistoryIndex(-1);
+      setInputValue('');
     }
   };
 

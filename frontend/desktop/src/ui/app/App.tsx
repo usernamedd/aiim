@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import { ToastProvider } from '../components/C03-Toast/Toast';
 import { ThemeProvider } from '../providers/ThemeProvider';
 import { useAuthStore } from '../../infrastructure/stores/auth-store';
+import { useChatShortcuts } from '../hooks/useKeyboardShortcuts';
 import { LoginPage } from '../pages/P01-登录页';
 import { RegisterPage } from '../pages/P02-注册页';
 import { ForgotPasswordPage } from '../pages/P03-忘记密码页';
@@ -40,6 +41,9 @@ function GuestGuard() {
 }
 
 export function App() {
+  // Global keyboard shortcuts
+  useChatShortcuts({});
+
   return (
     <ThemeProvider>
       <ToastProvider>
