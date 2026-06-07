@@ -12,30 +12,62 @@ import { Spinner } from '../../components/C12-Loading/Loading';
 export function ChatPage() {
   const { chatRoomId } = useParams<{ chatRoomId: string }>();
   const navigate = useNavigate();
-  const { messages, loadMessages, sendMessage, isLoadingMessages, chatRooms } = useChat();
+  const { messages, loadMessages, sendMessage, isLoadingMessages, chatRooms, setCurrentChatRoom } = useChat();
   const { user } = useAuthStore();
   const [inputValue, setInputValue] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [pendingAttachment, setPendingAttachment] = useState<{ name: string; data: string; type: 'image' | 'file' } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const chatRoom = chatRooms.find((r) => r.id === chatRoomId);
 
   useEffect(() => {
     if (chatRoomId) {
+      setCurrentChatRoom(chatRoomId);
       loadMessages(chatRoomId);
     }
-  }, [chatRoomId, loadMessages]);
+  }, [chatRoomId, loadMessages, setCurrentChatRoom]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith('image/');
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setPendingAttachment({
+          name: file.name,
+          data: ev.target?.result as string,
+          type: 'image',
+        });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // For non-image files, just store name as placeholder
+      setPendingAttachment({
+        name: file.name,
+        data: file.name,
+        type: 'file',
+      });
+    }
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  };
 
   const handleSend = async () => {
-    if (!inputValue.trim() || isSending) return;
+    if (isSending) return;
     setIsSending(true);
     try {
-      await sendMessage(inputValue.trim());
+      if (pendingAttachment) {
+        await sendMessage(pendingAttachment.data, pendingAttachment.type);
+        setPendingAttachment(null);
+      }
+      if (inputValue.trim()) {
+        await sendMessage(inputValue.trim(), 'text');
+      }
       setInputValue('');
       inputRef.current?.focus();
     } finally {
@@ -89,9 +121,41 @@ export function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Pending Attachment Preview */}
+      {pendingAttachment && (
+        <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center gap-3">
+          {pendingAttachment.type === 'image' ? (
+            <img src={pendingAttachment.data} alt="attachment" className="h-12 w-12 object-cover rounded-lg" />
+          ) : (
+            <span className="text-2xl">📎</span>
+          )}
+          <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate">{pendingAttachment.name}</span>
+          <button
+            onClick={() => setPendingAttachment(null)}
+            className="text-slate-400 hover:text-red-500 text-sm"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
         <div className="flex items-end gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf,.doc,.docx,.txt,.md,.zip,.rar"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            title="添加附件"
+          >
+            📎
+          </button>
           <div className="flex-1">
             <Input
               ref={inputRef}
@@ -105,7 +169,7 @@ export function ChatPage() {
             variant="primary"
             onClick={handleSend}
             isLoading={isSending}
-            disabled={!inputValue.trim()}
+            disabled={!inputValue.trim() && !pendingAttachment}
           >
             发送
           </Button>

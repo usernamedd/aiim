@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../../components/C05-Avatar/Avatar';
 import { EmptyState } from '../../components/C11-EmptyState/EmptyState';
-import type { Contact } from '../../../domain/entities/Contact';
 
 type FilterTab = 'all' | 'messages' | 'files' | 'contacts' | 'code';
 
@@ -131,23 +130,6 @@ const mockSearch = (query: string): SearchResult[] => {
 
   return results;
 };
-
-// Highlight matched text
-function HighlightedText({ text, query }: { text: string; query: string }) {
-  if (!query.trim()) return <>{text}</>;
-  const parts = text.split(new RegExp(`(${query})`, 'gi'));
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase() ? (
-          <span key={i} className="bg-yellow-200 dark:bg-yellow-800 px-0.5 rounded">{part}</span>
-        ) : (
-          part
-        )
-      )}
-    </>
-  );
-}
 
 export function SearchPage() {
   const navigate = useNavigate();

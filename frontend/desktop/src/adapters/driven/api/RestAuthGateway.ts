@@ -1,74 +1,107 @@
-// Adapter: REST Auth Gateway (Mock Implementation)
-// Simulates API calls — replace with real axios calls in production
+// Adapter: REST Auth Gateway (Real Implementation)
+// Connects to Go backend at http://localhost:8080
 
+import axios, { type AxiosInstance } from 'axios';
 import type { AuthGateway } from '../../../application/ports/driven/AuthGateway';
 import type { Token, Credentials, RegisterParams } from '../../../domain/value-objects';
 import { createToken } from '../../../domain/value-objects';
 import { createUser, type User } from '../../../domain/entities/User';
 
-const MOCK_DELAY = 500;
-
-function delay(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const API_BASE = 'http://localhost:8080/api/v1';
 
 export class RestAuthGateway implements AuthGateway {
+  private client: AxiosInstance;
+
+  constructor() {
+    this.client = axios.create({
+      baseURL: API_BASE,
+      timeout: 10000,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   async login(credentials: Credentials): Promise<{ token: Token; user: User }> {
-    await delay(MOCK_DELAY);
-    
-    // Mock: accept any credentials with password "password"
-    if (credentials.password !== 'password') {
-      throw new Error('Invalid credentials');
-    }
-    
-    const user = createUser({
-      id: crypto.randomUUID(),
+    const res = await this.client.post('/auth/login', {
       username: credentials.username,
-      nickname: credentials.username,
-      isOnline: true,
+      password: credentials.password,
     });
-    
+
+    if (res.data.code !== 0) {
+      throw new Error(res.data.message || 'login failed');
+    }
+
+    const { user: userDTO, access_token, refresh_token, expires_at } = res.data.data;
+
+    const user = createUser({
+      id: userDTO.id,
+      username: userDTO.username,
+      nickname: userDTO.nickname || userDTO.username,
+      email: userDTO.email,
+      avatar: userDTO.avatar_url,
+      isOnline: userDTO.status === 1,
+    });
+
     const token = createToken({
-      accessToken: 'mock-access-token-' + crypto.randomUUID(),
-      refreshToken: 'mock-refresh-token-' + crypto.randomUUID(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      accessToken: access_token,
+      refreshToken: refresh_token,
+      expiresAt: new Date(expires_at),
     });
-    
+
     return { token, user };
   }
 
   async register(params: RegisterParams): Promise<{ token: Token; user: User }> {
-    await delay(MOCK_DELAY);
-    
-    const user = createUser({
-      id: crypto.randomUUID(),
+    const res = await this.client.post('/auth/register', {
       username: params.username,
+      email: params.email || '',
+      password: params.password,
       nickname: params.nickname,
-      email: params.email,
-      phone: params.phone,
-      isOnline: true,
     });
-    
+
+    if (res.data.code !== 0) {
+      throw new Error(res.data.message || 'register failed');
+    }
+
+    const { user_id, username, email, nickname } = res.data.data;
+
+    const user = createUser({
+      id: user_id,
+      username,
+      nickname: nickname || username,
+      email,
+ isOnline: true,
+    });
+
+    // Register doesn't return tokens — user must login after register
     const token = createToken({
-      accessToken: 'mock-access-token-' + crypto.randomUUID(),
-      refreshToken: 'mock-refresh-token-' + crypto.randomUUID(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      accessToken: '',
+      refreshToken: '',
+      expiresAt: new Date(),
     });
-    
+
     return { token, user };
   }
 
-  async refreshToken(_refreshToken: string): Promise<Token> {
-    await delay(MOCK_DELAY);
-    
+  async refreshToken(refreshToken: string): Promise<Token> {
+    const res = await this.client.post('/auth/refresh', { refresh_token: refreshToken });
+
+    if (res.data.code !== 0) {
+      throw new Error(res.data.message || 'refresh failed');
+    }
+
+    const { access_token, refresh_token, expires_at } = res.data.data;
+
     return createToken({
-      accessToken: 'mock-access-token-' + crypto.randomUUID(),
-      refreshToken: 'mock-refresh-token-' + crypto.randomUUID(),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      accessToken: access_token,
+      refreshToken: refresh_token,
+      expiresAt: new Date(expires_at),
     });
   }
 
   async logout(): Promise<void> {
-    await delay(MOCK_DELAY / 2);
+    // Note: real logout needs session_id — bridge via token if needed
+    await this.client.post('/auth/logout', { session_id: '' }).catch(() => {
+      // best-effort
+    });
   }
 }

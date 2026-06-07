@@ -99,7 +99,7 @@ const MOCK_SCOPES: ScopeSection[] = [
   {
     name: '闭包变量',
     variables: [
-      { name: 'result', type: 'object', value: { name: 'result', type: 'Response', value: { status: 200, ok: true } } }
+      { name: 'result', type: 'Response', value: { status: { name: 'status', type: 'number', value: '200' }, ok: { name: 'ok', type: 'boolean', value: 'true' } } }
     ]
   },
   {
@@ -447,7 +447,7 @@ function VariableItem({ variable, depth = 0 }: { variable: Variable; depth?: num
           {variable.type}
         </span>
         <span className="text-sm text-gray-600 dark:text-gray-300 flex-1 truncate">
-          {isObject ? (expanded ? '' : '{...}') : variable.value}
+          {isObject ? (expanded ? '' : '{...}') : String(variable.value)}
         </span>
         <button className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 text-xs">
           📋
@@ -457,7 +457,7 @@ function VariableItem({ variable, depth = 0 }: { variable: Variable; depth?: num
       {expanded && isObject && (
         <div className="ml-2">
           {Object.entries(variable.value as Record<string, Variable>).map(([key, val]) => (
-            <VariableItem key={key} variable={{ name: key, ...val }} depth={depth + 1} />
+            <VariableItem key={key} variable={{ name: key, type: val.type, value: val.value }} depth={depth + 1} />
           ))}
         </div>
       )}
@@ -642,7 +642,7 @@ export function DebugConsolePage() {
   const [status, setStatus] = useState<DebugSessionStatus>('paused')
   const [sessionName] = useState('my-app:3000')
   const [consoleCollapsed, setConsoleCollapsed] = useState(false)
-  const [breakpointsEnabled, setBreakpointsEnabled] = useState(true)
+  const [breakpointsEnabled] = useState(true)
 
   // Mock source file state
   const [sourceFile] = useState<SourceFile>(() => {

@@ -1,6 +1,7 @@
 // UI Layer: Root App Component with React Router
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ToastProvider } from '../components/C03-Toast/Toast';
+import { ThemeProvider } from '../providers/ThemeProvider';
 import { useAuthStore } from '../../infrastructure/stores/auth-store';
 import { LoginPage } from '../pages/P01-登录页';
 import { RegisterPage } from '../pages/P02-注册页';
@@ -40,39 +41,41 @@ function GuestGuard() {
 
 export function App() {
   return (
-    <ToastProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Guest only routes */}
-          <Route element={<GuestGuard />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          </Route>
+    <ThemeProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Guest only routes */}
+            <Route element={<GuestGuard />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            </Route>
 
-          {/* Protected routes */}
-          <Route element={<AuthGuard />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/chat/:chatRoomId" element={<ChatPage />} />
-            <Route path="/group/:chatRoomId" element={<GroupChatPage />} />
-            <Route path="/contacts" element={<ContactsPage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/search/results" element={<SearchResultsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/settings/domain" element={<SettingsDomainPage />} />
-            <Route path="/files" element={<FileBrowserPage />} />
-            <Route path="/debug" element={<DebugConsolePage />} />
-            <Route path="/diff" element={<DiffViewerPage />} />
-            <Route path="/ai" element={<AIAssistantPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/stock/:symbol" element={<StockDetailPage />} />
-          </Route>
+            {/* Protected routes */}
+            <Route element={<AuthGuard />}>
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/chat/:chatRoomId" element={<ChatPage />} />
+              <Route path="/group/:chatRoomId" element={<GroupChatPage />} />
+              <Route path="/contacts" element={<ContactsPage />} />
+              <Route path="/search" element={<SearchPage />} />
+              <Route path="/search/results" element={<SearchResultsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/settings/domain" element={<SettingsDomainPage />} />
+              <Route path="/files" element={<FileBrowserPage />} />
+              <Route path="/debug" element={<DebugConsolePage />} />
+              <Route path="/diff" element={<DiffViewerPage />} />
+              <Route path="/ai" element={<AIAssistantPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/stock/:symbol" element={<StockDetailPage />} />
+            </Route>
 
-          {/* Default redirects */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </ToastProvider>
+            {/* Default redirects */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

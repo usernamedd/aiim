@@ -109,7 +109,7 @@ function PieChart() {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const [selectedDate, setSelectedDate] = useState('2026-05-25')
+  const [selectedDate] = useState('2026-05-25')
 
   const totalValue = mockStocks.reduce((sum, s) => sum + s.marketValue, 0)
   const totalCost = mockStocks.reduce((sum, s) => sum + s.cost * s.holdings, 0)

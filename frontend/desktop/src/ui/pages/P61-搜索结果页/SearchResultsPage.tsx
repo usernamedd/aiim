@@ -197,7 +197,6 @@ export function SearchResultsPage() {
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredResults.length / itemsPerPage));
-  const paginatedResults = filteredResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col">
