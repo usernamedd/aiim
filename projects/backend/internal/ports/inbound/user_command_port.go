@@ -22,6 +22,24 @@ type UserCommandPort interface {
 
 	// GetUsersByIDs 批量获取用户（WebSocket 在线状态广播用）
 	GetUsersByIDs(ctx context.Context, userIDs []string) ([]*model.User, error)
+
+	// AddContact 添加联系人
+	AddContact(ctx context.Context, userID, contactID string) error
+
+	// RemoveContact 删除联系人
+	RemoveContact(ctx context.Context, userID, contactID string) error
+
+	// ListContacts 列出联系人
+	ListContacts(ctx context.Context, userID string) ([]*model.User, error)
+
+	// BlockUser 拉黑用户
+	BlockUser(ctx context.Context, userID, blockedID string) error
+
+	// UnblockUser 解除拉黑
+	UnblockUser(ctx context.Context, userID, blockedID string) error
+
+	// ListBlocked 获取黑名单列表
+	ListBlocked(ctx context.Context, userID string) ([]*model.User, error)
 }
 
 // UserQueryPort 用户查询端口（只读）

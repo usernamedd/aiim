@@ -69,13 +69,27 @@ func (s *MessageService) SendMessage(ctx context.Context, chatID, senderID strin
 }
 
 func (s *MessageService) MarkAsRead(ctx context.Context, userID, chatID string, messageID string) error {
-	// 1. 更新成员已读位置
+	// B5: 更新成员已读位置
 	err := s.chatRepo.UpdateLastReadMessageID(ctx, chatID, userID, messageID)
 	if err != nil {
 		return err
 	}
 
-	// 2. 获取聊天室成员，广播已读状态给其他成员
+	// B2: 获取消息发送者，发 read_receipt（B3）
+	msg, err := s.msgRepo.FindByID(ctx, messageID)
+	if err == nil && msg.SenderID != userID {
+		// 发给消息发送者
+		s.wsHub.SendToUser(msg.SenderID, outbound.WSMessage{
+			Type: outbound.WSMsgTypeReadReceipt,
+			Payload: map[string]interface{}{
+				"chat_id":    chatID,
+				"message_id": messageID,
+				"read_by":    userID,
+			},
+		})
+	}
+
+	// B2: 广播 message_read 给聊天室其他成员
 	members, _ := s.chatRepo.GetMembers(ctx, chatID)
 	for _, m := range members {
 		if m.ID != userID {

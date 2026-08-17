@@ -48,5 +48,12 @@ func autoMigrate(db *gorm.DB) error {
 		&ChatGORM{},
 		&ChatMemberGORM{},
 		&MessageGORM{},
+		&BlockListGORM{},
+		&ContactGORM{},
 	)
+}
+
+// AutoMigrate 对外暴露的建表函数（main.go 启动时调用）
+func AutoMigrate(db *gorm.DB) error {
+	return autoMigrate(db)
 }

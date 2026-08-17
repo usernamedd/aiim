@@ -100,3 +100,105 @@ func usersToDTO(users []*model.User) []gin.H {
 	}
 	return result
 }
+
+// AddContact POST /api/v1/contacts
+func (h *UserHandler) AddContact(c *gin.Context) {
+	userID := GetUserID(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": "unauthorized"})
+		return
+	}
+	var req struct {
+		ContactID string `json:"contact_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "invalid input"})
+		return
+	}
+	if err := h.svc.AddContact(c.Request.Context(), userID, req.ContactID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "ok"})
+}
+
+// RemoveContact DELETE /api/v1/contacts/:id
+func (h *UserHandler) RemoveContact(c *gin.Context) {
+	userID := GetUserID(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": "unauthorized"})
+		return
+	}
+	contactID := c.Param("id")
+	if err := h.svc.RemoveContact(c.Request.Context(), userID, contactID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "ok"})
+}
+
+// ListContacts GET /api/v1/contacts
+func (h *UserHandler) ListContacts(c *gin.Context) {
+	userID := GetUserID(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": "unauthorized"})
+		return
+	}
+	contacts, err := h.svc.ListContacts(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "ok", "data": gin.H{"contacts": usersToDTO(contacts)}})
+}
+
+// BlockUser POST /api/v1/block
+func (h *UserHandler) BlockUser(c *gin.Context) {
+	userID := GetUserID(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": "unauthorized"})
+		return
+	}
+	var req struct {
+		BlockedID string `json:"blocked_id" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 400, "message": "invalid input"})
+		return
+	}
+	if err := h.svc.BlockUser(c.Request.Context(), userID, req.BlockedID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "ok"})
+}
+
+// UnblockUser DELETE /api/v1/block/:id
+func (h *UserHandler) UnblockUser(c *gin.Context) {
+	userID := GetUserID(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": "unauthorized"})
+		return
+	}
+	blockedID := c.Param("id")
+	if err := h.svc.UnblockUser(c.Request.Context(), userID, blockedID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "ok"})
+}
+
+// ListBlocked GET /api/v1/block
+func (h *UserHandler) ListBlocked(c *gin.Context) {
+	userID := GetUserID(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"code": 401, "message": "unauthorized"})
+		return
+	}
+	blocked, err := h.svc.ListBlocked(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 500, "message": "internal server error"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "ok", "data": gin.H{"blocked": usersToDTO(blocked)}})
+}

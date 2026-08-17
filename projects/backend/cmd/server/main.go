@@ -40,11 +40,18 @@ func main() {
 		logger.Fatal("数据库初始化失败", zap.Error(err))
 	}
 
+	// 自动建表
+	if err := persistence.AutoMigrate(db.DB); err != nil {
+		logger.Fatal("数据库迁移失败", zap.Error(err))
+	}
+
 	// Outbound adapters
 	userRepo := persistence.NewGORMUserRepo(db)
 	sessionRepo := persistence.NewGROMSessionRepo(db)
 	chatRepo := persistence.NewGORMChatRepo(db)
 	messageRepo := persistence.NewGORMMessageRepo(db)
+	contactRepo := persistence.NewGORMContactRepo(db)
+	blockListRepo := persistence.NewGORMBlockListRepo(db)
 
 	tokenSvc := token.NewJWTTokenService(
 		config.Config.GetString("jwt.secret"),
@@ -70,7 +77,7 @@ func main() {
 
 	// Domain Services
 	authSvc := service.NewAuthService(userRepo, sessionRepo, tokenSvc)
-	userSvc := service.NewUserService(userRepo)
+	userSvc := service.NewUserService(userRepo, contactRepo, blockListRepo)
 	messageSvc := service.NewMessageService(messageRepo, chatRepo, wsHub)
 
 	// Inbound Handlers
@@ -89,6 +96,7 @@ func main() {
 	go wsHub.Run(ctx)
 
 	router := gin.Default()
+	router.Use(http.CORSMiddleware())
 	registerRoutes(router, authHandler, userHandler, wsHandler, authMiddleware, chatHandler, uploadHandler)
 
 	// 信号处理（Ctrl+C / SIGTERM）
@@ -132,6 +140,22 @@ func registerRoutes(r *gin.Engine, ah *http.AuthHandler, uh *http.UserHandler, w
 			users.GET("/search", uh.SearchUsers)
 			users.GET("/:id", uh.GetUser)
 			users.PUT("/profile", uh.UpdateProfile)
+		}
+
+		contacts := api.Group("/contacts")
+		contacts.Use(am.RequireAuth())
+		{
+			contacts.POST("", uh.AddContact)
+			contacts.GET("", uh.ListContacts)
+			contacts.DELETE("/:id", uh.RemoveContact)
+		}
+
+		block := api.Group("/block")
+		block.Use(am.RequireAuth())
+		{
+			block.POST("", uh.BlockUser)
+			block.GET("", uh.ListBlocked)
+			block.DELETE("/:id", uh.UnblockUser)
 		}
 
 		chats := api.Group("/chats")

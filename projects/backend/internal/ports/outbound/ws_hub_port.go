@@ -35,4 +35,6 @@ const (
 	WSMsgTypeMemberJoined = "member_joined"
 	WSMsgTypeMemberLeft   = "member_left"
 	WSMsgTypeMessageRead  = "message_read"
+	WSMsgTypeReadReceipt  = "read_receipt"
+	WSMsgTypeUnreadCount  = "unread_count"
 )

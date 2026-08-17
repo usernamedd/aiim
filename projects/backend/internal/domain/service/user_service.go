@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"aiim/internal/adapters/outbound/persistence"
 	"aiim/internal/domain/errors"
 	"aiim/internal/domain/model"
 	"aiim/internal/ports/inbound"
@@ -10,11 +11,17 @@ import (
 )
 
 type UserService struct {
-	userRepo outbound.UserRepositoryPort
+	userRepo        outbound.UserRepositoryPort
+	contactRepo     *persistence.GORMContactRepo
+	blockListRepo   *persistence.GORMBlockListRepo
 }
 
-func NewUserService(userRepo outbound.UserRepositoryPort) inbound.UserCommandPort {
-	return &UserService{userRepo: userRepo}
+func NewUserService(userRepo outbound.UserRepositoryPort, contactRepo *persistence.GORMContactRepo, blockListRepo *persistence.GORMBlockListRepo) inbound.UserCommandPort {
+	return &UserService{
+		userRepo:      userRepo,
+		contactRepo:   contactRepo,
+		blockListRepo: blockListRepo,
+	}
 }
 
 func (s *UserService) UpdateProfile(ctx context.Context, userID, nickname, avatarURL string) (*model.User, error) {
@@ -73,4 +80,40 @@ func (s *UserService) ListFriends(ctx context.Context, userID string) ([]*model.
 	// TODO: friend relation ship
 	_ = userID
 	return nil, errors.ErrUserNotFound
+}
+
+func (s *UserService) AddContact(ctx context.Context, userID, contactID string) error {
+	return s.contactRepo.AddContact(ctx, userID, contactID, "")
+}
+
+func (s *UserService) RemoveContact(ctx context.Context, userID, contactID string) error {
+	return s.contactRepo.RemoveContact(ctx, userID, contactID)
+}
+
+func (s *UserService) ListContacts(ctx context.Context, userID string) ([]*model.User, error) {
+	contactIDs, err := s.contactRepo.ListContacts(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.userRepo.FindByIDs(ctx, contactIDs)
+}
+
+func (s *UserService) BlockUser(ctx context.Context, userID, blockedID string) error {
+	// 不能拉黑自己
+	if userID == blockedID {
+		return errors.ErrUserNotFound
+	}
+	return s.blockListRepo.AddBlock(ctx, userID, blockedID)
+}
+
+func (s *UserService) UnblockUser(ctx context.Context, userID, blockedID string) error {
+	return s.blockListRepo.RemoveBlock(ctx, userID, blockedID)
+}
+
+func (s *UserService) ListBlocked(ctx context.Context, userID string) ([]*model.User, error) {
+	blockedIDs, err := s.blockListRepo.ListBlocked(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.userRepo.FindByIDs(ctx, blockedIDs)
 }

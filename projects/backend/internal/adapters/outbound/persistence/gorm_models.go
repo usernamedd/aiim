@@ -73,3 +73,24 @@ type MessageGORM struct {
 }
 
 func (MessageGORM) TableName() string { return "messages" }
+
+// BlockListGORM GORM 黑名单模型
+type BlockListGORM struct {
+	ID        string    `gorm:"primaryKey;type:varchar(36)"`
+	UserID    string    `gorm:"uniqueIndex:idx_block_user;type:varchar(36);not null"`
+	BlockedID string    `gorm:"uniqueIndex:idx_block_user;type:varchar(36);not null"`
+	CreatedAt time.Time
+}
+
+func (BlockListGORM) TableName() string { return "block_list" }
+
+// ContactGORM GORM 联系人模型
+type ContactGORM struct {
+	ID        string    `gorm:"primaryKey;type:varchar(36)"`
+	UserID    string    `gorm:"uniqueIndex:idx_contact_user;type:varchar(36);not null"`
+	ContactID string    `gorm:"uniqueIndex:idx_contact_user;type:varchar(36);not null"`
+	Remark    string    `gorm:"type:varchar(100)"`
+	CreatedAt time.Time
+}
+
+func (ContactGORM) TableName() string { return "contacts" }

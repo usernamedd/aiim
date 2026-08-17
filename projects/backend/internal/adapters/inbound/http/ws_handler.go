@@ -89,16 +89,68 @@ func (h *WSHandler) onMessage(userID string, wc *realtime.Conn, data []byte) {
 	case "ping":
 		h.hub.SendToUser(userID, outbound.WSMessage{Type: outbound.WSMsgTypePong})
 
+	case "mark_read":
+		var p struct {
+			ChatID    string `json:"chat_id"`
+			MessageID string `json:"message_id"`
+		}
+		json.Unmarshal(msg.Payload, &p)
+		err := h.msgSvc.MarkAsRead(ctx, userID, p.ChatID, p.MessageID)
+		if err != nil {
+			h.sendError(wc, err.Error())
+			return
+		}
+		// B3: 发 read_receipt 给消息发送者（由 MessageService 内部处理）
+
+	case "get_unread":
+		// B4: 用户打开聊天室时主动查询未读数
+		var p struct {
+			ChatID string `json:"chat_id"`
+		}
+		json.Unmarshal(msg.Payload, &p)
+		count, err := h.msgSvc.GetUnreadCount(ctx, userID, p.ChatID)
+		if err == nil {
+			h.hub.SendToUser(userID, outbound.WSMessage{
+				Type: outbound.WSMsgTypeUnreadCount,
+				Payload: map[string]interface{}{
+					"chat_id": p.ChatID,
+					"unread":  count,
+				},
+			})
+		}
+
 	case "send_message":
 		var p struct {
 			Text        string `json:"text"`
 			ChatID      string `json:"chat_id"`
 			ClientMsgID string `json:"client_msg_id"`
+			Type        string `json:"type"`        // text/image/file/voice/code
+			Url         string `json:"url"`         // 富媒体 URL
+			MimeType    string `json:"mime_type"`    // MIME 类型
+			Size        int64  `json:"size"`        // 文件大小
+			Thumbnail   string `json:"thumbnail"`    // 缩略图 URL
+			Duration    int    `json:"duration"`    // 音视频时长
+			Width       int    `json:"width"`       // 图片宽度
+			Height      int    `json:"height"`      // 图片高度
 		}
 		json.Unmarshal(msg.Payload, &p)
+
+		// B6: 支持富媒体消息类型
+		contentType := model.ContentTypeText
+		if p.Type == "image" || p.Type == "file" || p.Type == "voice" || p.Type == "code" {
+			contentType = model.ContentType(p.Type)
+		}
+
 		content := model.MessageContent{
-			Type: model.ContentTypeText,
-			Text: p.Text,
+			Type:         contentType,
+			Text:         p.Text,
+			Url:          p.Url,
+			MimeType:     p.MimeType,
+			Size:         p.Size,
+			ThumbnailUrl: p.Thumbnail,
+			Duration:     p.Duration,
+			Width:        p.Width,
+			Height:       p.Height,
 		}
 		sent, err := h.msgSvc.SendMessage(ctx, p.ChatID, userID, content)
 		if err != nil {
@@ -112,14 +164,6 @@ func (h *WSHandler) onMessage(userID string, wc *realtime.Conn, data []byte) {
 				"server_msg_id": sent.ID,
 			},
 		})
-
-	case "mark_read":
-		var p struct {
-			ChatID    string `json:"chat_id"`
-			MessageID string `json:"message_id"`
-		}
-		json.Unmarshal(msg.Payload, &p)
-		h.msgSvc.MarkAsRead(ctx, userID, p.ChatID, p.MessageID)
 	}
 }
 

@@ -4,10 +4,54 @@ import (
 	"net/http"
 	"strings"
 
+	"aiim/internal/config"
 	"aiim/internal/ports/inbound"
 
 	"github.com/gin-gonic/gin"
 )
+
+// CORSMiddleware CORS 中间件，读取 config.yaml 中的 cors 配置
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		allowedOrigins := config.Config.GetStringSlice("cors.allowed_origins")
+		allowedMethods := config.Config.GetStringSlice("cors.allowed_methods")
+		allowedHeaders := config.Config.GetStringSlice("cors.allowed_headers")
+		exposeHeaders := config.Config.GetStringSlice("cors.expose_headers")
+		allowCredentials := config.Config.GetBool("cors.allow_credentials")
+
+		// 检查 origin 是否在白名单里
+		validOrigin := ""
+		for _, o := range allowedOrigins {
+			if o == origin || o == "*" {
+				validOrigin = o
+				break
+			}
+		}
+
+		if validOrigin != "" {
+			c.Header("Access-Control-Allow-Origin", validOrigin)
+			c.Header("Access-Control-Allow-Methods", strings.Join(allowedMethods, ", "))
+			c.Header("Access-Control-Allow-Headers", strings.Join(allowedHeaders, ", "))
+			c.Header("Access-Control-Expose-Headers", strings.Join(exposeHeaders, ", "))
+			if allowCredentials {
+				c.Header("Access-Control-Allow-Credentials", "true")
+			}
+			//允许 JSONP
+			if c.GetHeader("Access-Control-Request-Method") != "" {
+				c.Header("Access-Control-Allow-Methods", strings.Join(allowedMethods, ", "))
+			}
+		}
+
+		// 处理 preflight
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
+	}
+}
 
 // AuthMiddleware JWT 认证中间件
 type AuthMiddleware struct {
