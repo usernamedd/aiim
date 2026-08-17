@@ -20,87 +20,7 @@ interface ContextMenuState {
   contactId: string | null;
 }
 
-// Mock contact data for demo
-const mockContacts: Contact[] = [
-  {
-    id: '1',
-    userId: 'current-user',
-    friendId: 'friend-1',
-    username: 'zhangsan',
-    nickname: '张三',
-    avatar: undefined,
-    tags: ['friends'],
-    isBlocked: false,
-    isOnline: true,
-    lastMessageAt: new Date(),
-    createdAt: new Date(),
-  },
-  {
-    id: '2',
-    userId: 'current-user',
-    friendId: 'friend-2',
-    username: 'lisi',
-    nickname: '李四',
-    avatar: undefined,
-    tags: ['friends'],
-    isBlocked: false,
-    isOnline: false,
-    lastMessageAt: new Date(),
-    createdAt: new Date(),
-  },
-  {
-    id: '3',
-    userId: 'current-user',
-    friendId: 'friend-3',
-    username: 'wangwu',
-    nickname: '王五',
-    avatar: undefined,
-    tags: ['colleagues'],
-    isBlocked: false,
-    isOnline: true,
-    lastMessageAt: new Date(),
-    createdAt: new Date(),
-  },
-  {
-    id: '4',
-    userId: 'current-user',
-    friendId: 'friend-4',
-    username: 'zhaoliu',
-    nickname: '赵六',
-    avatar: undefined,
-    tags: ['colleagues'],
-    isBlocked: false,
-    isOnline: false,
-    lastMessageAt: new Date(),
-    createdAt: new Date(),
-  },
-  {
-    id: '5',
-    userId: 'current-user',
-    friendId: 'friend-5',
-    username: 'sunqi',
-    nickname: '孙七',
-    avatar: undefined,
-    tags: ['strangers'],
-    isBlocked: false,
-    isOnline: true,
-    lastMessageAt: new Date(),
-    createdAt: new Date(),
-  },
-  {
-    id: '6',
-    userId: 'current-user',
-    friendId: 'friend-6',
-    username: 'zhouba',
-    nickname: '周八',
-    avatar: undefined,
-    tags: ['strangers'],
-    isBlocked: false,
-    isOnline: false,
-    lastMessageAt: new Date(),
-    createdAt: new Date(),
-  },
-];
+// SearchBar Component
 
 // SearchBar Component (C02)
 function SearchBar({
@@ -185,11 +105,9 @@ function ContextMenu({
 
 export function ContactsPage() {
   const navigate = useNavigate();
-  const { contacts: storeContacts, addContact: storeAddContact, createGroup, isLoadingContacts, loadContacts } = useChat();
-  
-  // Use mock data if no store contacts
-  const contacts = storeContacts.length > 0 ? storeContacts : mockContacts;
-  
+  const { contacts, addContact: storeAddContact, createGroup, isLoadingContacts, removeContact } = useChat();
+
+  // No mock fallback — use real data from store
   const [activeTab, setActiveTab] = useState<ContactGroup>('friends');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -247,12 +165,9 @@ export function ContactsPage() {
     setContextMenu((prev) => ({ ...prev, visible: false }));
   };
 
-  // Delete contact
+  // Delete contact — calls real API
   const handleDeleteContact = (contactId: string) => {
-    // In real app, call API to delete
-    console.log('Delete contact:', contactId);
-    // For demo, just reload contacts
-    loadContacts();
+    removeContact(contactId);
   };
 
   // Start chat with contact

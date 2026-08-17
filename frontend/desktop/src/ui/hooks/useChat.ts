@@ -111,6 +111,11 @@ export function useChat() {
     return room;
   }, [addChatRoom]);
 
+  const removeContact = useCallback(async (contactId: string) => {
+    await chatService.removeContact(contactId);
+    setContacts(contacts.filter(c => c.id !== contactId));
+  }, [contacts, setContacts]);
+
   const selectChatRoom = useCallback(async (chatRoomId: string) => {
     setCurrentChatRoom(chatRoomId);
     await loadMessages(chatRoomId, 1);
@@ -134,6 +139,7 @@ export function useChat() {
     createChatRoom,
     addContact,
     createGroup,
+    removeContact,
     selectChatRoom,
     setCurrentChatRoom: (id: string | null) => setCurrentChatRoom(id),
     reset,

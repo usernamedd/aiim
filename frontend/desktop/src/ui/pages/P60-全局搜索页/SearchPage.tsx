@@ -1,4 +1,6 @@
 // Page: P60 全局搜索页
+// 注意：后端暂无消息/文件搜索 API（/users/search 仅有联系人搜索）
+// 当前为 UI 演示实现，真实搜索需后端支持消息内容索引
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar } from '../../components/C05-Avatar/Avatar';

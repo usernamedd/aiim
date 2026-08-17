@@ -1,4 +1,6 @@
-// Page: P31 调试控制台页
+// Page: P31 调试控制台页（软件工程切面）
+// 注意：纯 UI 演示页，无后端 API 对接
+// 后续通过 P32 语言服务器协议（LSP）接入真实调试能力
 import { useState } from 'react'
 import { EmptyState } from '../../components/C11-EmptyState/EmptyState'
 

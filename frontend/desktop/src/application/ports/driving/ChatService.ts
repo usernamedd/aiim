@@ -20,6 +20,7 @@ export interface ChatService {
   // Contacts
   getContacts(): Promise<Contact[]>;
   addContact(username: string): Promise<Contact>;
+  removeContact(contactId: string): Promise<void>;
 
   // WebSocket
   connectWebSocket(): Promise<void>;
